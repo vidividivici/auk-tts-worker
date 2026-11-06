@@ -16,5 +16,7 @@ RUN python /app/prepare.py ${AUK_VARIANT} \
     && python -c "from transformers import Qwen2_5OmniProcessor as P; P.from_pretrained('/models/qwen')"
 
 COPY handler.py /app/handler.py
-ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+# AUK_CPU_OFFLOAD=1 (default): text encoder and DiT take turns on the GPU, peak 12.5 GiB -> fits the 16 GB pool.
+# Set 0 on a 24 GB GPU: peak 21.8 GiB, ~4x faster per clip (2 s vs 9 s for a 10 s clip on an RTX A5000).
+ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 AUK_CPU_OFFLOAD=1
 CMD ["python", "-u", "/app/handler.py"]

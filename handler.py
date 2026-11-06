@@ -46,7 +46,10 @@ def generate(ref_path, prompt_text, text, max_out_s=MAX_OUT_S):
     if len(text) > MAX_CHARS:
         return {"error": f"Text too long for AuK ({len(text)} characters, max {MAX_CHARS})"}
     # AuK is non-autoregressive: the output length is set up front from the reference's speaking rate
-    secs = min(max_out_s, max(1.0, get_gen_duration(ref_path, prompt_text, text)))
+    est = get_gen_duration(ref_path, prompt_text, text)
+    if est > max_out_s * 1.1:  # squeezing more speech into the 45 s window garbles it (measured), so refuse instead
+        return {"error": f"Text too long for this voice with AuK (about {est:.0f} s of speech, max {max_out_s:.0f} s). Shorten it or split it."}
+    secs = min(max_out_s, max(1.0, est))
     msgs = [{"role": "user", "content": [
         {"type": "text", "text": f'Say the following with the same voice: "{text}"'},
         {"type": "audio", "audio": ref_path},
